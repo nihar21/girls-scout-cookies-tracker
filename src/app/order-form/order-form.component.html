@@ -10,16 +10,23 @@
         <!-- Repeat this block for each type of cookie -->
         <div class="form-group" *ngFor="let cookie of cookies">
             <label for="{{cookie.type}}">{{cookie.type}} (${{cookie.price}})</label>
-            <input type="number" id="{{cookie.type}}" class="form-control" formControlName="{{cookie.type}}">
+            <select id="{{cookie.type}}" class="form-control" formControlName="{{cookie.type}}">
+                <option *ngFor="let qty of quantities" [value]="qty">{{qty}}</option>
+            </select>
         </div>
 
         <!-- Paid Status Checkbox -->
-        <div class="form-group form-check">
+        <div class="form-check-group">
             <input type="checkbox" id="paidStatus" class="form-check-input" formControlName="paidStatus">
             <label for="paidStatus">Paid</label>
         </div>
 
+        <!-- Running Total -->
+        <div class="total-amount-label">
+            <label>Total Amount: ${{ runningTotal }}</label>
+        </div>
+
         <!-- Submit Button -->
-        <button type="submit" class="btn btn-primary">Submit Order</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!orderForm.valid">Submit Order</button>
     </form>
 </div>

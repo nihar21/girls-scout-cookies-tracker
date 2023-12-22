@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, FormControl, ValidatorFn, ValidationErrors } from '@angular/forms';
+import { Order } from '../core/models/order.module';
+import {v4 as uuid} from 'uuid';
+import { DataService } from '../core/data-service';
 
 @Component({
   selector: 'app-order-form',
@@ -22,8 +25,9 @@ export class OrderFormComponent implements OnInit {
   ];
   quantities: number[] = Array.from({ length: 101 }, (_, i) => i);
   runningTotal = 0;
+  currentOrder: Order = this.resetOrder();
 
-  constructor(private formBuilder: FormBuilder) {}
+  constructor(private formBuilder: FormBuilder, private dataService: DataService) {}
 
   ngOnInit() {
       const controls: { [key: string]: FormControl } = {
@@ -36,15 +40,40 @@ export class OrderFormComponent implements OnInit {
       });
 
       this.orderForm = this.formBuilder.group(controls, { validators: this.atLeastOneCookieSelected() });
-      this.onChanges();
+      
+      this.orderForm.valueChanges.subscribe(values => {
+        console.log("Form values: ", values)
+        console.log("Form Status: ", this.orderForm.valid)
+        this.runningTotal = this.calculateTotal();
+
+        this.currentOrder = {
+            ...this.currentOrder,
+            name: values.customerName,
+            cookies: this.getSelectedCookies(values),
+            totalAmount: this.runningTotal,
+            isPaid: values.paidStatus
+        };
+      });
+
   }
 
-  onChanges(): void {
-    console.log("on changes reached");
-    this.orderForm.valueChanges.subscribe(val => {
-        this.runningTotal = this.calculateTotal();
-    });
-}
+  // onChanges(): void {
+  //   console.log("Form state: ", this.orderForm.valid)
+
+  //   this.orderForm.valueChanges.subscribe(val => {
+  //       this.runningTotal = this.calculateTotal();
+  //   });
+
+  //   this.orderForm.valueChanges.subscribe(values => {
+  //     this.currentOrder = {
+  //         ...this.currentOrder,
+  //         name: values.customerName,
+  //         cookies: this.getSelectedCookies(values),
+  //         totalAmount: this.calculateTotal(),
+  //         isPaid: values.paidStatus
+  //     };
+  //   });
+  // }
 
   calculateTotal(): number {
     if (!this.orderForm) {
@@ -56,9 +85,18 @@ export class OrderFormComponent implements OnInit {
         return total + (quantity * cookie.price);
     }, 0);
 
-    console.log("Total calculated: ", total); // Debugging log
     return total;
   }
+
+  getSelectedCookies(values: any): { [type: string]: number } {
+    return this.cookies.reduce((selected: { [type: string]: number }, cookie) => {
+        const quantity = values[cookie.type];
+        if (quantity > 0) {
+            selected[cookie.type] = quantity;
+        }
+        return selected;
+    }, {});
+}
 
   private atLeastOneCookieSelected(): any {
     return (group: FormGroup): ValidationErrors | null => {
@@ -68,11 +106,47 @@ export class OrderFormComponent implements OnInit {
     };
   }
 
+  resetOrder(): Order {
+    // Returns a new Order object with default values
+    return {
+        orderId: uuid(), // Generate or set orderId as needed
+        name: '',
+        cookies: {},
+        totalAmount: 0,
+        isPaid: false
+    };
+  }
+
 
   onSubmit() {
+    console.log("Form state: ", this.orderForm.valid)
       if (this.orderForm.valid) {
-          console.log('Order Data:', this.orderForm.value);
-          // Handle order submission logic here
+          console.log('Current Order:', this.currentOrder);
+          this.dataService.addOrder(this.currentOrder)
+            .then(() => {
+              this.resetFormAndOrder();
+            })
+            .catch(error => {
+                // Handle any errors
+                console.error("Error submitting order: ", error);
+            });
       }
+      console.log("Form state: ", this.orderForm.valid)
+      console.log("Form object: ", this.orderForm)
+  }
+
+  resetFormAndOrder() {
+    const resetValues = {
+      customerName: '',
+      paidStatus: false,
+      ...this.cookies.reduce((acc: { [type: string]: number }, cookie) => {
+          acc[cookie.type] = 0; // Set each cookie's quantity to 0
+          return acc;
+      }, {})
+    };
+    this.orderForm.reset(resetValues);
+    this.orderForm.markAsPristine();
+    this.orderForm.markAsUntouched();
+    this.currentOrder = this.resetOrder();
   }
 }

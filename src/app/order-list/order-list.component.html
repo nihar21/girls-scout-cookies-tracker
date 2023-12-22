@@ -1,1 +1,25 @@
-<p>order-list works!</p>
+<div class="order-list-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer Name</th>
+          <th>Items Ordered</th>
+          <th>Total Amount</th>
+          <th>Paid Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders">
+          <td>{{ order.name }}</td>
+          <td>
+            <div *ngFor="let item of order.cookies | keyvalue">
+              {{ item.key }}: {{ item.value }}
+            </div>
+          </td>
+          <td>${{ order.totalAmount }}</td>
+          <td>{{ order.isPaid ? 'Yes' : 'No' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  

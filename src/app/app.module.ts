@@ -1,5 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getDatabase } from "firebase/database";
+
 
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -10,6 +12,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { OrderFormComponent } from './order-form/order-form.component';
 import { OrderListComponent } from './order-list/order-list.component';
 import { ReactiveFormsModule } from '@angular/forms';
+
 
 @NgModule({
   declarations: [
@@ -35,9 +38,12 @@ const firebaseConfig = {
   storageBucket: "girls-scout-cookies-tracker.appspot.com",
   messagingSenderId: "279209910836",
   appId: "1:279209910836:web:ce8436ea613482f73de061",
-  measurementId: "G-YPD4PW87XT"
+  measurementId: "G-YPD4PW87XT",
+  databaseURL: "https://girls-scout-cookies-tracker-default-rtdb.firebaseio.com"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+
+const database = getDatabase(app)
